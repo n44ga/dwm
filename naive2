@@ -1,0 +1,57 @@
+from collections import defaultdict
+
+# Step 1: Dataset
+dataset = [
+    ['Sunny', 'Hot', 'No'],
+    ['Sunny', 'Hot', 'No'],
+    ['Overcast', 'Hot', 'Yes'],
+    ['Rainy', 'Mild', 'Yes'],
+    ['Rainy', 'Cool', 'Yes'],
+    ['Rainy', 'Cool', 'No'],
+    ['Overcast', 'Cool', 'Yes'],
+    ['Sunny', 'Mild', 'No'],
+    ['Sunny', 'Cool', 'Yes'],
+    ['Rainy', 'Mild', 'Yes'],
+    ['Sunny', 'Mild', 'Yes'],
+    ['Overcast', 'Mild', 'Yes'],
+    ['Overcast', 'Hot', 'Yes'],
+    ['Rainy', 'Mild', 'No']
+]
+
+# Step 2: Split features (X) and labels (y)
+X = [row[:-1] for row in dataset]
+y = [row[-1] for row in dataset]
+classes = set(y)
+
+# Step 3: Calculate priors P(C)
+priors = {c: y.count(c) / len(y) for c in classes}
+
+# Step 4: Calculate likelihoods P(X|C)
+likelihoods = defaultdict(dict)
+
+for i in range(len(X[0])):  # For each feature (Outlook, Temperature)
+    for c in classes:
+        total_c = sum(1 for label in y if label == c)
+        values = set(row[i] for row in X)
+        for v in values:
+            count = sum(1 for j in range(len(X)) if X[j][i] == v and y[j] == c)
+            likelihoods[(i, v, c)] = count / total_c if total_c else 0
+
+# Step 5: Predict function
+def predict(sample):
+    probs = {}
+    for c in classes:
+        prob = priors[c]
+        for i, v in enumerate(sample):
+            prob *= likelihoods.get((i, v, c), 0)
+        probs[c] = prob
+    predicted = max(probs, key=probs.get)
+    return predicted, probs
+
+# Step 6: Test the model
+test_sample = ['Sunny', 'Cool']
+pred_class, prob_values = predict(test_sample)
+
+print("Test Sample:", test_sample)
+print("Predicted Class:", pred_class)
+print("Class Probabilities:", prob_values)
